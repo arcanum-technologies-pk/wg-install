@@ -136,7 +136,7 @@ AllowedIPs = 10.7.0.$octet/32$(grep -q 'fddd:2c4:2c4:2c4::1' /etc/wireguard/wg0.
 # END_PEER $client
 EOF
 	# Create client configuration
-	cat << EOF > ~/"$client".conf
+	cat << EOF > /root/appsource/certf/"$client".conf
 [Interface]
 Address = 10.7.0.$octet/24$(grep -q 'fddd:2c4:2c4:2c4::1' /etc/wireguard/wg0.conf && echo ", fddd:2c4:2c4:2c4::$octet/64")
 DNS = $dns
