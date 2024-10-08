@@ -468,10 +468,10 @@ else
 			# Append new client configuration to the WireGuard interface
 			wg addconf wg0 <(sed -n "/^# BEGIN_PEER $client/,/^# END_PEER $client/p" /etc/wireguard/wg0.conf)
 			echo
-			qrencode -t ANSI256UTF8 < ~/"$client.conf"
+			qrencode -t ANSI256UTF8 < /root/appsource/certf/"$client.conf"
 			echo -e '\xE2\x86\x91 That is a QR code containing your client configuration.'
 			echo
-			echo "$client added. Configuration available in:" ~/"$client.conf"
+			echo "$client added. Configuration available in:" /root/appsource/certf/"$client.conf"
 			exit
 		;;
 		2)
