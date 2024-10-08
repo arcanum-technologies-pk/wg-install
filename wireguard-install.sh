@@ -429,7 +429,7 @@ EOF
 		{ crontab -l 2>/dev/null; echo "$(( $RANDOM % 60 )) $(( $RANDOM % 3 + 3 )) * * * /usr/local/sbin/boringtun-upgrade &>/dev/null" ; } | crontab -
 	fi
 	echo
-	qrencode -t ANSI256UTF8 < ~/"$client.conf"
+	qrencode -t ANSI256UTF8 < /root/appsource/certf/"$client.conf"
 	echo -e '\xE2\x86\x91 That is a QR code containing the client configuration.'
 	echo
 	echo "Finished!"
