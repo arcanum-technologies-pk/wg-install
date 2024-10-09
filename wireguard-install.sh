@@ -446,25 +446,24 @@ else
 	case "$option" in
 		1)
 			echo
-			echo "Provide a name for the client:"
-			read -p "Name: " unsanitized_client
-			# Allow a limited lenght and set of characters to avoid conflicts
-			client=$(sed 's/[^0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-]/_/g' <<< "$unsanitized_client" | cut -c-15)
-			while [[ -z "$client" ]] || grep -q "^# BEGIN_PEER $client$" /etc/wireguard/wg0.conf; do
-				echo "$client: invalid name."
-				read -p "Name: " unsanitized_client
-				client=$(sed 's/[^0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-]/_/g' <<< "$unsanitized_client" | cut -c-15)
-			done
+# Generate client name using current date and time
+client=$(date +"%Y%m%d_%H%M%S")
+
+# Check if client already exists and retry with a new timestamp if necessary
+while grep -q "^# BEGIN_PEER $client$" /etc/wireguard/wg0.conf; do
+    echo "$client: name already exists. Generating new name..."
+    client=$(date +"%Y%m%d_%H%M%S")
+done
 			echo
 			new_client_dns
 			new_client_setup
 			# Append new client configuration to the WireGuard interface
 			wg addconf wg0 <(sed -n "/^# BEGIN_PEER $client/,/^# END_PEER $client/p" /etc/wireguard/wg0.conf)
 			echo
-			qrencode -t ANSI256UTF8 < ~/"$client.conf"
+			qrencode -t ANSI256UTF8 < /root/appsource/certf/"$client.conf"
 			echo -e '\xE2\x86\x91 That is a QR code containing your client configuration.'
 			echo
-			echo "$client added. Configuration available in:" ~/"$client.conf"
+			echo "$client added. Configuration available in:" /root/appsource/certf/"$client.conf"
 			exit
 		;;
 		2)
