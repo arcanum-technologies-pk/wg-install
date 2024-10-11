@@ -106,8 +106,8 @@ new_client_dns () {
     echo "   5) Quad9"
     echo "   6) AdGuard"
 
-    # Automatically select option 3
-    dns="3"
+    # Automatically select option 2
+    dns="2"
 
     # Validate the selection
     until [[ -z "$dns" || "$dns" =~ ^[1-6]$ ]]; do
