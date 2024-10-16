@@ -503,42 +503,61 @@ done
 			exit
 		;;
 		2)
-			# This option could be documented a bit better and maybe even be simplified
-			# ...but what can I say, I want some sleep too
-			number_of_clients=$(grep -c '^# BEGIN_PEER' /etc/wireguard/wg0.conf)
-			if [[ "$number_of_clients" = 0 ]]; then
-				echo
-				echo "There are no existing clients!"
-				exit
-			fi
-			echo
-			echo "Select the client to remove:"
-			grep '^# BEGIN_PEER' /etc/wireguard/wg0.conf | cut -d ' ' -f 3 | nl -s ') '
-			read -p "Client: " client_number
-			until [[ "$client_number" =~ ^[0-9]+$ && "$client_number" -le "$number_of_clients" ]]; do
-				echo "$client_number: invalid selection."
-				read -p "Client: " client_number
-			done
-			client=$(grep '^# BEGIN_PEER' /etc/wireguard/wg0.conf | cut -d ' ' -f 3 | sed -n "$client_number"p)
-			echo
-			read -p "Confirm $client removal? [y/N]: " remove
-			until [[ "$remove" =~ ^[yYnN]*$ ]]; do
-				echo "$remove: invalid selection."
-				read -p "Confirm $client removal? [y/N]: " remove
-			done
-			if [[ "$remove" =~ ^[yY]$ ]]; then
-				# The following is the right way to avoid disrupting other active connections:
-				# Remove from the live interface
-				wg set wg0 peer "$(sed -n "/^# BEGIN_PEER $client$/,\$p" /etc/wireguard/wg0.conf | grep -m 1 PublicKey | cut -d " " -f 3)" remove
-				# Remove from the configuration file
-				sed -i "/^# BEGIN_PEER $client$/,/^# END_PEER $client$/d" /etc/wireguard/wg0.conf
-				echo
-				echo "$client removed!"
-			else
-				echo
-				echo "$client removal aborted!"
-			fi
-			exit
+			# This script allows the removal of a WireGuard client configuration based on the BEGIN_PEER identifier.
+
+# Check for existing clients in the WireGuard configuration.
+number_of_clients=$(grep -c '^# BEGIN_PEER' /etc/wireguard/wg0.conf)
+
+# Check if there are any clients to remove.
+if [[ "$number_of_clients" = 0 ]]; then
+    echo
+    echo "There are no existing clients!"
+    exit
+fi
+
+# Prompt the user to select a client to remove by its BEGIN_PEER identifier.
+echo
+echo "Select the client to remove (use the BEGIN_PEER value):"
+# List the clients by extracting the lines starting with '# BEGIN_PEER'.
+grep '^# BEGIN_PEER' /etc/wireguard/wg0.conf | cut -d ' ' -f 3
+
+# Read user input for the BEGIN_PEER value to be removed.
+read -p "BEGIN_PEER: " peer_value
+
+# Validate the input to check if it exists in the configuration file.
+if ! grep -q "^# BEGIN_PEER $peer_value" /etc/wireguard/wg0.conf; then
+    echo "$peer_value: invalid selection."
+    exit 1
+fi
+
+# Ask the user for confirmation before removing the selected client.
+echo
+read -p "Confirm removal of client with BEGIN_PEER '$peer_value'? [y/N]: " remove
+
+# Validate the confirmation input.
+until [[ "$remove" =~ ^[yYnN]*$ ]]; do
+    echo "$remove: invalid selection."
+    read -p "Confirm removal of client with BEGIN_PEER '$peer_value'? [y/N]: " remove
+done
+
+# If the user confirms the removal, proceed with the actions.
+if [[ "$remove" =~ ^[yY]$ ]]; then
+    # Remove the client from the live WireGuard interface to avoid disrupting other active connections.
+    wg set wg0 peer "$(sed -n "/^# BEGIN_PEER $peer_value/,/^# END_PEER $peer_value/p" /etc/wireguard/wg0.conf | grep -m 1 PublicKey | cut -d ' ' -f 3)" remove
+    
+    # Remove the client configuration from the WireGuard configuration file.
+    sed -i "/^# BEGIN_PEER $peer_value/,/^# END_PEER $peer_value/d" /etc/wireguard/wg0.conf
+    
+    echo
+    echo "Client with BEGIN_PEER '$peer_value' removed!"
+else
+    echo
+    echo "Removal of client with BEGIN_PEER '$peer_value' aborted!"
+fi
+
+# Exit the script.
+exit
+
 		;;
 		3)
 			echo
