@@ -527,7 +527,7 @@ case "$option" in
         fi
         exit
     ;;
-		;;
+		
 		3)
 			echo
 			read -p "Confirm WireGuard removal? [y/N]: " remove
