@@ -509,8 +509,8 @@ case "$option" in
             echo "$client_number: invalid selection."
             read -p "Client: " client_number
         done
-	client=$(grep "^# BEGIN_PEER $client_name" /etc/wireguard/wg0.conf | cut -d ' ' -f 3)
-       # client=$(grep '^# BEGIN_PEER' /etc/wireguard/wg0.conf | cut -d ' ' -f 3 | sed -n "$client_number"p)
+	# client=$(grep "^# BEGIN_PEER $client_name" /etc/wireguard/wg0.conf | cut -d ' ' -f 3)
+       client=$(grep '^# BEGIN_PEER' /etc/wireguard/wg0.conf | cut -d ' ' -f 3 | sed -n "$client_number"p)
         echo
         read -p "Confirm $client removal? [y/N]: " remove
         until [[ "$remove" =~ ^[yYnN]*$ ]]; do
