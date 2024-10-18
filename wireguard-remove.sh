@@ -512,13 +512,8 @@ case "$option" in
 			done
 			client=$(grep '^# BEGIN_PEER' /etc/wireguard/wg0.conf | cut -d ' ' -f 3 | sed -n "$client_number"p)
 			echo
-			#read -p "Confirm $client removal? [y/N]: " remove
-   			remove = y
-			until [[ "$remove" =~ ^[yYnN]*$ ]]; do
-				echo "$remove: invalid selection."
-				read -p "Confirm $client removal? [y/N]: " remove
-			done
-			if [[ "$remove" =~ ^[yY]$ ]]; then
+			
+   			
 				# The following is the right way to avoid disrupting other active connections:
 				# Remove from the live interface
 				wg set wg0 peer "$(sed -n "/^# BEGIN_PEER $client$/,\$p" /etc/wireguard/wg0.conf | grep -m 1 PublicKey | cut -d " " -f 3)" remove
@@ -526,10 +521,7 @@ case "$option" in
 				sed -i "/^# BEGIN_PEER $client$/,/^# END_PEER $client$/d" /etc/wireguard/wg0.conf
 				echo
 				echo "$client removed!"
-			else
-				echo
-				echo "$client removal aborted!"
-			fi
+			
 			exit
     ;;
 		
