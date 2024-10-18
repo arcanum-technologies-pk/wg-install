@@ -494,7 +494,7 @@ case "$option" in
         # Add client logic (unchanged)
     ;;
     2)
-        # This option could be documented a bit better and maybe even be simplified
+       # This option could be documented a bit better and maybe even be simplified
 			# ...but what can I say, I want some sleep too
 			number_of_clients=$(grep -c '^# BEGIN_PEER' /etc/wireguard/wg0.conf)
 			if [[ "$number_of_clients" = 0 ]]; then
@@ -511,9 +511,7 @@ case "$option" in
 				read -p "Client: " client_number
 			done
 			client=$(grep '^# BEGIN_PEER' /etc/wireguard/wg0.conf | cut -d ' ' -f 3 | sed -n "$client_number"p)
-			echo
 			
-   			
 				# The following is the right way to avoid disrupting other active connections:
 				# Remove from the live interface
 				wg set wg0 peer "$(sed -n "/^# BEGIN_PEER $client$/,\$p" /etc/wireguard/wg0.conf | grep -m 1 PublicKey | cut -d " " -f 3)" remove
