@@ -503,13 +503,16 @@ case "$option" in
 				exit
 			fi
 			echo
-			echo "Select the client to remove:"
-			grep '^# BEGIN_PEER' /etc/wireguard/wg0.conf | cut -d ' ' -f 3 | nl -s ') '
-			read -p "Client: " client_number
-			until [[ "$client_number" =~ ^[0-9]+$ && "$client_number" -le "$number_of_clients" ]]; do
-				echo "$client_number: invalid selection."
-				read -p "Client: " client_number
-			done
+			# echo "Select the client to remove:"
+			# grep '^# BEGIN_PEER' /etc/wireguard/wg0.conf | cut -d ' ' -f 3 | nl -s ') '
+			# read -p "Client: " client_number
+			# until [[ "$client_number" =~ ^[0-9]+$ && "$client_number" -le "$number_of_clients" ]]; do
+			# 	echo "$client_number: invalid selection."
+			# 	read -p "Client: " client_number
+			# done
+   
+   			# Assign the first argument to a named variable
+			client_number=$1
 			client=$(grep '^# BEGIN_PEER' /etc/wireguard/wg0.conf | cut -d ' ' -f 3 | sed -n "$client_number"p)
 			
 				# The following is the right way to avoid disrupting other active connections:
