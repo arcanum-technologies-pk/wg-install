@@ -467,18 +467,18 @@ EOF
 	echo "New clients can be added by running this script again."
 else
 	clear
-	echo "WireGuard is already installed."
-echo
-echo "Select an option:"
-echo "   1) Add a new client"
-echo "   2) Remove an existing client"
-echo "   3) Remove WireGuard"
-echo "   4) Exit"
+#echo "WireGuard is already installed."
+#echo
+#echo "Select an option:"
+#echo "   1) Add a new client"
+#echo "   2) Remove an existing client"
+#echo "   3) Remove WireGuard"
+#echo "   4) Exit"
 
 # Automatically set option 2 (to remove an existing client)
 option=2
-echo "Automatically selecting option 2 (Remove an existing client)"
-echo
+#echo "Automatically selecting option 2 (Remove an existing client)"
+#echo
 
 # Remove the manual selection prompt
 #read -p "Option: " option
