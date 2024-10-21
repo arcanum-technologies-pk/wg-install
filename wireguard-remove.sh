@@ -514,7 +514,7 @@ case "$option" in
    			# Assign the first argument to a named variable
 			client_number=$1
 
-			if [ -z "$client_number" && "$client_number" =~ ^[0-9]+$ && "$client_number" -le "$number_of_clients" ]; then
+			if [[ -z "$client_number" || ! "$client_number" =~ ^[0-9]+$ || "$client_number" -gt "$number_of_clients" ]]; then
   				echo "No valid parameter provided!"
   				exit
 			else
