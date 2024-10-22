@@ -527,6 +527,16 @@ case "$option" in
 				wg set wg0 peer "$(sed -n "/^# BEGIN_PEER $client$/,\$p" /etc/wireguard/wg0.conf | grep -m 1 PublicKey | cut -d " " -f 3)" remove
 				# Remove from the configuration file
 				sed -i "/^# BEGIN_PEER $client$/,/^# END_PEER $client$/d" /etc/wireguard/wg0.conf
+
+				# Delete the associated configuration file if it exists
+					    client_config_file="/root/appsource/certf/$client.conf"
+					    if [[ -f "$client_config_file" ]]; then
+					        rm "$client_config_file"
+					        echo "Configuration file $client_config_file removed!"
+					    else
+					        echo "Configuration file for $client not found!"
+					    fi
+	
 				echo
 				echo "$client removed!"
 			
