@@ -514,13 +514,17 @@ case "$option" in
    			# Assign the first argument to a named variable
 			client_number=$1
 
-			if [[ -z "$client_number" || ! "$client_number" =~ ^[0-9]+$ || "$client_number" -gt "$number_of_clients" ]]; then
+   			#786
+			#if [[ -z "$client_number" || ! "$client_number" =~ ^[0-9]+$ || "$client_number" -gt "$number_of_clients" ]]; then
+   			if [[ -z "$client_number" ]]; then
   				echo "No valid parameter provided!"
   				exit
 			else
  				 # Your script logic here using $client_number
+				# 786
+      				#client=$(grep '^# BEGIN_PEER' /etc/wireguard/wg0.conf | cut -d ' ' -f 3 | sed -n "$client_number"p)
 
-      				client=$(grep '^# BEGIN_PEER' /etc/wireguard/wg0.conf | cut -d ' ' -f 3 | sed -n "$client_number"p)
+      				client=$(grep "^# BEGIN_PEER $client_number" /etc/wireguard/wg0.conf | cut -d ' ' -f 3)
 			
 				# The following is the right way to avoid disrupting other active connections:
 				# Remove from the live interface
