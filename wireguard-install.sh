@@ -156,8 +156,9 @@ new_client_setup () {
 		(( octet++ ))
 	done
 	# Don't break the WireGuard configuration in case the address space is full
-	if [[ "$octet" -eq 255 ]]; then
-		echo "253 clients are already configured. The WireGuard internal subnet is full!"
+	#if [[ "$octet" -eq 255 ]]; then
+ 	if [[ "$octet" -eq 15550000 ]]; then
+		echo "15550000 clients are already configured. The WireGuard internal subnet is full!"
 		exit
 	fi
 	key=$(wg genkey)
