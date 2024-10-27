@@ -149,32 +149,59 @@ new_client_dns () {
 }
 
 new_client_setup () {
-	# Given a list of the assigned internal IPv4 addresses, obtain the lowest still
-	# available octet. Important to start looking at 2, because 1 is our gateway.
-	octet=2
-	while grep AllowedIPs /etc/wireguard/wg0.conf | cut -d "." -f 4 | cut -d "/" -f 1 | grep -q "^$octet$"; do
-		(( octet++ ))
-	done
-	# Don't break the WireGuard configuration in case the address space is full
-	if [[ "$octet" -eq 255 ]]; then
-		echo "255 clients are already configured. The WireGuard internal subnet is full!"
-		exit
-	fi
-	key=$(wg genkey)
-	psk=$(wg genpsk)
-	# Configure client in the server
-	cat << EOF >> /etc/wireguard/wg0.conf
+    # Initialize octets for IP allocation
+    octet1=10
+    octet2=7
+    octet3=0
+    octet4=2
+
+    # Loop to find the next available IP
+    while grep AllowedIPs /etc/wireguard/wg0.conf | cut -d "." -f 2,3,4 | cut -d "/" -f 1 | grep -q "^$octet2.$octet3.$octet4$"; do
+        (( octet4++ ))
+        
+        # When fourth octet reaches 255, reset and increment the third octet
+        if [[ "$octet4" -ge 255 ]]; then
+            octet4=2
+            (( octet3++ ))
+        fi
+        
+        # When third octet reaches 255, reset and increment the second octet
+        if [[ "$octet3" -ge 255 ]]; then
+            octet3=0
+            (( octet2++ ))
+        fi
+
+        # When second octet reaches 255, reset and increment the first octet
+        if [[ "$octet2" -ge 255 ]]; then
+            octet2=0
+            (( octet1++ ))
+        fi
+
+        # Exit if the address space is exhausted (adjust if needed)
+        if [[ "$octet1" -ge 11 ]]; then
+            echo "Address space exhausted. Cannot assign more clients!"
+            exit
+        fi
+    done
+
+    # Generate keys
+    key=$(wg genkey)
+    psk=$(wg genpsk)
+
+    # Configure client on the server
+    cat << EOF >> /etc/wireguard/wg0.conf
 # BEGIN_PEER $client
 [Peer]
 PublicKey = $(wg pubkey <<< $key)
 PresharedKey = $psk
-AllowedIPs = 10.7.0.$octet/8$(grep -q 'fddd:2c4:2c4:2c4::1' /etc/wireguard/wg0.conf && echo ", fddd:2c4:2c4:2c4::$octet/128")
+AllowedIPs = $octet1.$octet2.$octet3.$octet4/32$(grep -q 'fddd:2c4:2c4:2c4::1' /etc/wireguard/wg0.conf && echo ", fddd:2c4:2c4:2c4::$octet4/128")
 # END_PEER $client
 EOF
-	# Create client configuration
-	cat << EOF > /root/appsource/certf/"$client".conf
+
+    # Create client configuration
+    cat << EOF > /root/appsource/certf/"$client".conf
 [Interface]
-Address = 10.7.0.$octet/8$(grep -q 'fddd:2c4:2c4:2c4::1' /etc/wireguard/wg0.conf && echo ", fddd:2c4:2c4:2c4::$octet/64")
+Address = $octet1.$octet2.$octet3.$octet4/32$(grep -q 'fddd:2c4:2c4:2c4::1' /etc/wireguard/wg0.conf && echo ", fddd:2c4:2c4:2c4::$octet4/64")
 DNS = $dns
 PrivateKey = $key
 
@@ -186,6 +213,7 @@ Endpoint = $(grep '^# ENDPOINT' /etc/wireguard/wg0.conf | cut -d " " -f 3):$(gre
 PersistentKeepalive = 25
 EOF
 }
+
 
 if [[ ! -e /etc/wireguard/wg0.conf ]]; then
 	# Detect some Debian minimal setups where neither wget nor curl are installed
