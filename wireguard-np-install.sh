@@ -198,8 +198,8 @@ AllowedIPs = $octet1.$octet2.$octet3.$octet4/32$(grep -q 'fddd:2c4:2c4:2c4::1' /
 # END_PEER $client
 EOF
 
-    # Create client configuration
-    cat << EOF > /root/appsource/certf/"$client".conf
+# Create client configuration
+cat << EOF > /root/appsource/certf/"$client".conf
 [Interface]
 Address = $octet1.$octet2.$octet3.$octet4/32$(grep -q 'fddd:2c4:2c4:2c4::1' /etc/wireguard/wg0.conf && echo ", fddd:2c4:2c4:2c4::$octet4/64")
 DNS = $dns
@@ -213,6 +213,24 @@ Endpoint = $(grep '^# ENDPOINT' /etc/wireguard/wg0.conf | cut -d " " -f 3):$(gre
 PersistentKeepalive = 25
 Cname = $client
 EOF
+
+
+ # Output JSON-like format (for demonstration purposes)
+    echo "{
+  \"Interface\": {
+    \"Address\": \"$allowedIp\",
+    \"DNS\": \"$dns\",
+    \"PrivateKey\": \"$privateKey\"
+  },
+  \"Peer\": {
+    \"PublicKey\": \"$server_public_key\",
+    \"PresharedKey\": \"$psk\",
+    \"AllowedIPs\": \"$ALLOWED_IPS\",
+    \"Endpoint\": \"$server_endpoint\",
+    \"PersistentKeepalive\": \"25\"
+  }
+}"
+
 }
 
 
@@ -521,7 +539,90 @@ while grep -q "^# BEGIN_PEER $client$" /etc/wireguard/wg0.conf; do
 done
 			echo
 			new_client_dns
-			new_client_setup
+			#new_client_setup
+   #----------------------------------------
+   # Initialize octets for IP allocation
+    octet1=10
+    octet2=7
+    octet3=0
+    octet4=2
+
+    # Loop to find the next available IP
+    while grep AllowedIPs /etc/wireguard/wg0.conf | cut -d "." -f 2,3,4 | cut -d "/" -f 1 | grep -q "^$octet2.$octet3.$octet4$"; do
+        (( octet4++ ))
+        
+        # When fourth octet reaches 255, reset and increment the third octet
+        if [[ "$octet4" -ge 255 ]]; then
+            octet4=2
+            (( octet3++ ))
+        fi
+        
+        # When third octet reaches 255, reset and increment the second octet
+        if [[ "$octet3" -ge 255 ]]; then
+            octet3=0
+            (( octet2++ ))
+        fi
+
+        # When second octet reaches 255, reset and increment the first octet
+        if [[ "$octet2" -ge 255 ]]; then
+            octet2=0
+            (( octet1++ ))
+        fi
+
+        # Exit if the address space is exhausted (adjust if needed)
+        if [[ "$octet1" -ge 11 ]]; then
+            echo "Address space exhausted. Cannot assign more clients!"
+            exit
+        fi
+    done
+
+    # Generate keys
+    key=$(wg genkey)
+    psk=$(wg genpsk)
+
+    # Configure client on the server
+    cat << EOF >> /etc/wireguard/wg0.conf
+# BEGIN_PEER $client
+[Peer]
+PublicKey = $(wg pubkey <<< $key)
+PresharedKey = $psk
+AllowedIPs = $octet1.$octet2.$octet3.$octet4/32$(grep -q 'fddd:2c4:2c4:2c4::1' /etc/wireguard/wg0.conf && echo ", fddd:2c4:2c4:2c4::$octet4/128")
+# END_PEER $client
+EOF
+
+# Create client configuration
+cat << EOF > /root/appsource/certf/"$client".conf
+[Interface]
+Address = $octet1.$octet2.$octet3.$octet4/32$(grep -q 'fddd:2c4:2c4:2c4::1' /etc/wireguard/wg0.conf && echo ", fddd:2c4:2c4:2c4::$octet4/64")
+DNS = $dns
+PrivateKey = $key
+
+[Peer]
+PublicKey = $(grep PrivateKey /etc/wireguard/wg0.conf | cut -d " " -f 3 | wg pubkey)
+PresharedKey = $psk
+AllowedIPs = 0.0.0.0/0, ::/0
+Endpoint = $(grep '^# ENDPOINT' /etc/wireguard/wg0.conf | cut -d " " -f 3):$(grep ListenPort /etc/wireguard/wg0.conf | cut -d " " -f 3)
+PersistentKeepalive = 25
+Cname = $client
+EOF
+
+
+ # Output JSON-like format (for demonstration purposes)
+    echo "{
+  \"Interface\": {
+    \"Address\": \"$allowedIp\",
+    \"DNS\": \"$dns\",
+    \"PrivateKey\": \"$privateKey\"
+  },
+  \"Peer\": {
+    \"PublicKey\": \"$server_public_key\",
+    \"PresharedKey\": \"$psk\",
+    \"AllowedIPs\": \"$ALLOWED_IPS\",
+    \"Endpoint\": \"$server_endpoint\",
+    \"PersistentKeepalive\": \"25\"
+  }
+}"
+   #----------------------------------------
 			# Append new client configuration to the WireGuard interface
 			wg addconf wg0 <(sed -n "/^# BEGIN_PEER $client/,/^# END_PEER $client/p" /etc/wireguard/wg0.conf)
 			echo
